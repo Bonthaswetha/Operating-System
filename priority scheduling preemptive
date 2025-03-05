@@ -1,0 +1,121 @@
+#include <stdio.h>
+
+#define MAX_PROCESSES 100
+
+typedef struct {
+    int pid, arrival_time, burst_time, remaining_time, priority;
+    int completion_time, turnaround_time, waiting_time, response_time;
+    int started;  
+} Process;
+
+void priority_preemptive(Process processes[], int n) {
+    int completed = 0, time = 0, min_index;
+    int highest_priority, i;
+    
+    while (completed != n) {
+        highest_priority = __INT_MAX__;
+        min_index = -1;
+
+        
+        for (i = 0; i < n; i++) {
+            if (processes[i].arrival_time <= time && processes[i].remaining_time > 0 &&
+                processes[i].priority < highest_priority) {  
+                highest_priority = processes[i].priority;
+                min_index = i;
+            }
+        }
+
+        if (min_index == -1) {
+            time++;  
+            continue;
+        }
+
+        if (processes[min_index].started == 0) {
+            processes[min_index].response_time = time - processes[min_index].arrival_time;
+            processes[min_index].started = 1;
+        }
+
+      
+        processes[min_index].remaining_time--;
+        time++;
+
+       
+        if (processes[min_index].remaining_time == 0) {
+            completed++;
+            processes[min_index].completion_time = time;
+            processes[min_index].turnaround_time = processes[min_index].completion_time - processes[min_index].arrival_time;
+            processes[min_index].waiting_time = processes[min_index].turnaround_time - processes[min_index].burst_time;
+        }
+    }
+}
+
+void print_results(Process processes[], int n) {
+    float avg_waiting_time = 0, avg_turnaround_time = 0, avg_response_time = 0;
+    printf("\nPID\tArrival\tBurst\tPriority\tCompletion\tTurnaround\tWaiting\tResponse\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\t%d\t\t%d\t\t%d\t\t%d\t%d\n", processes[i].pid, processes[i].arrival_time,
+               processes[i].burst_time, processes[i].priority, processes[i].completion_time,
+               processes[i].turnaround_time, processes[i].waiting_time, processes[i].response_time);
+        avg_waiting_time += processes[i].waiting_time;
+        avg_turnaround_time += processes[i].turnaround_time;
+        avg_response_time += processes[i].response_time;
+    }
+
+    avg_waiting_time /= n;
+    avg_turnaround_time /= n;
+    avg_response_time /= n;
+    printf("\nAverage Turnaround Time: %.2f", avg_turnaround_time);
+    printf("\nAverage Waiting Time: %.2f", avg_waiting_time);
+    printf("\nAverage Response Time: %.2f\n", avg_response_time);
+}
+
+int main() {
+    int n;
+    Process processes[MAX_PROCESSES];
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    printf("\nEnter priority,arrival time and burst time for each process:\n\n");
+    for (int i = 0; i < n; i++) {
+        processes[i].pid = i + 1;
+        printf("enter priority,AT,BT for Process %d:  ", i + 1);
+        scanf("%d %d %d", &processes[i].priority,&processes[i].arrival_time,&processes[i].burst_time);
+        processes[i].remaining_time = processes[i].burst_time;
+        processes[i].started = 0;  
+    }
+
+    priority_preemptive(processes, n);
+    print_results(processes, n);
+
+    return 0;
+}
+
+
+______________________________________________________________________________________________________________________
+output:
+
+Enter the number of processes: 7
+
+Enter priority,arrival time and burst time for each process:
+
+enter priority,AT,BT for Process 1:  3 0 8
+enter priority,AT,BT for Process 2:  4 1 2
+enter priority,AT,BT for Process 3:  4 3 4
+enter priority,AT,BT for Process 4:  5 4 1
+enter priority,AT,BT for Process 5:  2 5 6
+enter priority,AT,BT for Process 6:  6 6 5
+enter priority,AT,BT for Process 7:  1 10 1
+
+PID     Arrival Burst   Priority        Completion      Turnaround      Waiting Response
+1       0       8       3               15              15              7       0
+2       1       2       4               17              16              14      14
+3       3       4       4               21              18              14      14
+4       4       1       5               22              18              17      17
+5       5       6       2               12              7               1       0
+6       6       5       6               27              21              16      16
+7       10      1       1               11              1               0       0
+
+Average Turnaround Time: 13.71
+Average Waiting Time: 9.86
+Average Response Time: 8.71
